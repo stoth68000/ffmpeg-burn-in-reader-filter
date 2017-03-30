@@ -147,6 +147,7 @@ OBJS-$(CONFIG_COLORSPACE_FILTER)             += vf_colorspace.o colorspacedsp.o
 OBJS-$(CONFIG_CONVOLUTION_FILTER)            += vf_convolution.o
 OBJS-$(CONFIG_COPY_FILTER)                   += vf_copy.o
 OBJS-$(CONFIG_KLBURNIN_FILTER)               += vf_klburnin.o
+OBJS-$(CONFIG_KLBURN_FILTER)                 += vf_klburn.o
 OBJS-$(CONFIG_COREIMAGE_FILTER)              += vf_coreimage.o
 OBJS-$(CONFIG_COVER_RECT_FILTER)             += vf_cover_rect.o lavfutils.o
 OBJS-$(CONFIG_CROP_FILTER)                   += vf_crop.o
