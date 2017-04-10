@@ -24,6 +24,8 @@
  *
  * usage:
  *  ffmpeg -y -i ../../LTN/20170329/cleanbars-and-counter.ts -vf klburnin -f null -
+ *  Get a perfect binary copy, and a visual png.
+ *  ffmpeg -y -i ../../LTN/20170329/cleanbars-and-counter.ts -vf klburnin=200:1 -vframes 500 new%010d.png
  */
 
 #include "libavutil/imgutils.h"
@@ -46,6 +48,7 @@ typedef struct BurnContext
 	uint64_t line;
 	uint64_t bitwidth;
 	uint64_t bitheight;
+	uint64_t snapshot;
 
 } BurnContext;
 
@@ -56,6 +59,7 @@ static const AVOption klburnin_options[] = {
 
 	/* pixel row/line at which to the top of the digit box begins. */
 	{ "line", "set line", OFFSET(line), AV_OPT_TYPE_INT, {.i64=200}, 1, 1080, FLAGS, "line" },
+	{ "snapshot", "extract each frame to disk as YUV420P", OFFSET(snapshot), AV_OPT_TYPE_INT, {.i64=0}, 0, 1, FLAGS, "snapshot" },
 
 	/* With and height of each bit in pixels, usually digits are 30x30 pixels. */
 	{ "bitwidth", "set bit width", OFFSET(bitwidth), AV_OPT_TYPE_INT, {.i64=30}, 1, 128, FLAGS, "bitwidth" },
@@ -144,7 +148,16 @@ static void analyzeFrame(BurnContext *ctx, AVFrame *frame, uint8_t *pic, uint32_
 		ctx->inError = 0;
 	}
 	ctx->framecnt = bits;
-        
+
+	if (ctx->snapshot) {
+		char fn[64];
+		sprintf(fn, "snapshot-frame%010d-counter%010d.yuv420p", ctx->framesProcessed, (uint32_t)ctx->framecnt);
+		FILE *fh = fopen(fn, "wb");
+		if (fh) {
+			fwrite(pic, 1, sizeBytes, fh);
+			fclose(fh);
+		}
+	}
 	printf("%s: Frame %dx%d fmt:%s buf:%p bytes:%d burned-in-frame#%08d totalframes#%08d totalErrors#%" PRIu64 "\n",
 		t, frame->width, frame->height, av_get_pix_fmt_name(frame->format), pic, sizeBytes,
 		bits, ctx->framesProcessed, ctx->totalErrors);
@@ -166,7 +179,7 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *in)
 	av_frame_copy_props(out, in);
 	av_frame_copy(out, in);
 
-	analyzeFrame(ctx, out, out->data[0], out->width * out->height);
+	analyzeFrame(ctx, out, out->data[0], (out->width * out->height) + ((out->width * out->height) / 2));
 
 	av_frame_free(&in);
 	return ff_filter_frame(outlink, out);
